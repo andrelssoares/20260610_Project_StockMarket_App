@@ -2,8 +2,10 @@
 An advanced, high-performance financial machine learning pipeline designed to predict stock market structural price movements by fusing unstructured text descriptors (FinBERT token sequences), low-frequency micro corporate accounting metrics, and synchronized macroeconomic indicators [ID: 010, ID: 014].
 This architecture implements a fast, vectorized, de-fragmented engineering pipeline using contiguous 3D NumPy matrices and native PyTorch attention blocks [ID: 004, ID: 018]. It systematically prevents chronological lookahead information leakage by calculating all scaling and distribution parameters exclusively within past lookback bounds [ID: 011].
 
+
 ## ⚡ Key Architectural Upgrades (Resolving MAE & R² Variance)
 To eliminate typical time-series degradation limits (where naive models hit a performance ceiling of R² ≈ 0.5 and an out-of-sample MAE > 0.6), this production-ready implementation deploys three advanced architectural pillars:
+
 1. Learnable Attentive Pooling Layer
    Legacy global average pooling dilutes critical temporal momentum right before the trading execution day. This framework implements a multi-layer learnable attention pooling network:
    \(\text{Scores}_{t}=\mathbf{W}_{2}\cdot \tanh (\mathbf{W}_{1}\cdot \mathbf{X}_{t}+\mathbf{b}_{1})\)
@@ -22,44 +24,34 @@ To eliminate typical time-series degradation limits (where naive models hit a pe
  3. Vectorized Memory-Safe Operations
     The pipeline bypasses slow cell-by-cell row iterations by performing right-to-left launch gap stabilization and unscaling loops directly inside contiguous C-speed NumPy blocks, executing at a blazing-fast processing speed of over 24,000 rows per second [ID: 004].
 
-    📂 Multi-Branch Pipeline Graph Layout                        +----------------------------+
 
+📂 Multi-Branch Pipeline Graph Layout
+                        +----------------------------+
                         |  Master Input Asset Pool   |
                         +--------------+-------------+
                                        |
              +-------------------------+-------------------------+
-
              |                         |                         |
 +------------v------------+ +----------v----------+ +------------v------------+
-
 | Unstructured Text Branch| | Static Tabular Branch| | Sequential Market Branch |
 |  Corporate Descriptors  | |  [LIQUIDITY, EQUITY] | |   OHLCV Arrays + Macro   |
 +------------+------------+ +----------+----------+ +------------+------------+
-
              |                         |                         |
     FinBERT Tokenizer         Symmetrical Log Scale           nn.LSTM Stack
-
              |                         |                         |
   Trainable Pos. Embeddings     Linear Projection         Gated Feature Attention
-
              |                         |                         |
  Stacked Attention Blocks              |                         |
-
              |                         |                         |
   Attentive Token Pooling              |                         |
-
              |                         |                         |
      (Batch, 24) Shape         (Batch, 16) Shape        (Batch, Seq, 128) Shape
-
              |                         |                         |
              +------------+------------+                         |
-
                           |                                      |
                  Concatenate & Expand                            |
-
                           |                                      |
                (Batch, Seq, 40) Shape                            |
-
                           |                                      |
                           +------------------+-------------------+
                                              |
@@ -81,12 +73,14 @@ To eliminate typical time-series degradation limits (where naive models hit a pe
                                   | Forward Target Pred |
                                   +---------------------+
 
+
 ## ⚙️ Hyperparameter Configuration Constraints
 Programmatically extracted from active dataset partitions to guarantee absolute shape divisibility prior to neural graph allocations [ID: 017]:
 * Attention Bottleneck Dimensionality: 168 features total (24 NLP Features + 16 Tabular Features + 128 Time-Series Hidden Channels).
 * Parallel Attention Head Count: 8 heads (\(\text{Divisibility sanity check}: 168 \bmod 8 \equiv 0\), yielding a fixed allocation of exactly 21 feature nodes per active attention head).
 * Recurrent Deep Grid Layering: 2 stacked LSTM layers mapped to an adaptive feature gating mask [ID: 021].
 * Tabular Dimensional Shape: 2 unique channels (LIQUIDITY and EQUITY scaled natively via Symmetrical Log \(\text{sign}(x) \cdot \log(1 + \vert{}x\vert{})\) transformations to track negative corporate net worth without exceptions) [ID: 003, ID: 004].
+
 
 ## 📈 Optimization & Backtest Performance Strategy
 The training routine is locked into low-memory mini-batches utilizing AdamW optimization, coupled with a OneCycleLR learning rate scheduler to achieve super-convergence across 50 epochs [ID: 024]. Residual accounting errors and severe price anomalies are handled using a robust Huber Loss cost criterion (δ=1.0) [ID: 024].
